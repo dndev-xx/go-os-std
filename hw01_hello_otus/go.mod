@@ -1,4 +1,4 @@
-module github.com/dndev/go-os-std/hw01_hello_otus
+module github.com/dndev-xx/go-os-std/hw01_hello_otus
 
 go 1.22
 
