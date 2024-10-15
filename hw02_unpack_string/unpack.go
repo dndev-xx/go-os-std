@@ -29,6 +29,9 @@ func Unpack(input string) (string, error) {
 	isShielding := false
 	for _, val := range input {
 		if isShielding {
+			if unicode.IsLetter(val) {
+				return EMPTY, ErrInvalidString
+			}
 			prev = val
 			builder.WriteRune(val)
 			isShielding = false
