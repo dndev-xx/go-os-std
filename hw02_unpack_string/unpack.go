@@ -46,6 +46,10 @@ func Unpack(input string) (string, error) {
 			return EMPTY, err
 		}
 	}
+
+	if isShielding {
+		return EMPTY, ErrInvalidString
+	}
 	return builder.String(), nil
 }
 
