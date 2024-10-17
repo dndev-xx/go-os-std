@@ -10,10 +10,11 @@ import (
 var ErrInvalidString = errors.New("invalid input string")
 
 const (
-	EMPTY = ""
-	ZERO  = 0
-	UNIT  = 1
-	TWO   = 2
+	EMPTY     = ""
+	SHIELDING = '\\'
+	ZERO      = 0
+	UNIT      = 1
+	TWO       = 2
 )
 
 func Unpack(input string) (string, error) {
@@ -29,7 +30,7 @@ func Unpack(input string) (string, error) {
 	isShielding := false
 	for _, val := range input {
 		if isShielding {
-			if !(val == '\\' || unicode.IsDigit(val)) {
+			if !(val == SHIELDING || unicode.IsDigit(val)) {
 				return EMPTY, ErrInvalidString
 			}
 			prev = val
@@ -37,7 +38,7 @@ func Unpack(input string) (string, error) {
 			isShielding = false
 			continue
 		}
-		if val == '\\' {
+		if val == SHIELDING {
 			isShielding = true
 			continue
 		}
