@@ -33,8 +33,19 @@ func TestUnpack(t *testing.T) {
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b", `abc3\a`, `qwe\`, `\`}
+	invalidStrings := []string{"3abc", "45", "aaa10b", `abc3\a`}
 	for _, tc := range invalidStrings {
+		tc := tc
+		t.Run(tc, func(t *testing.T) {
+			_, err := Unpack(tc)
+			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+		})
+	}
+}
+
+func TestUnpackInvalidStringShielding(t *testing.T) {
+	invalidStringsShielding := []string{`qwe\`, `\`, `ddffgd\,`, `dfgfh\3\5\=`, `dfdgd\.\5\g`, `qwe\=>`, `qwe\%`, `qwe\@`}
+	for _, tc := range invalidStringsShielding {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)

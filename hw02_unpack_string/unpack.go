@@ -29,7 +29,7 @@ func Unpack(input string) (string, error) {
 	isShielding := false
 	for _, val := range input {
 		if isShielding {
-			if unicode.IsLetter(val) {
+			if !(val == '\\' || unicode.IsDigit(val)) {
 				return EMPTY, ErrInvalidString
 			}
 			prev = val
