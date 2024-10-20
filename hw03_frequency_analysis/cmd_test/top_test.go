@@ -1,9 +1,10 @@
-package hw03frequencyanalysis
+package cmd_test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/dndev-xx/go-os-std/hw03_frequency_analysis/cmd" //nolint:depguard
+	"github.com/stretchr/testify/require"                       //nolint:depguard
 )
 
 // Change to true if needed.
@@ -45,7 +46,7 @@ var text = `Как видите, он  спускается  по  лестни�
 
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
-		require.Len(t, Top10(""), 0)
+		require.Len(t, cmd.Top10(""), 0)
 	})
 
 	t.Run("positive test", func(t *testing.T) {
@@ -62,7 +63,7 @@ func TestTop10(t *testing.T) {
 				"кристофер", // 4
 				"не",        // 4
 			}
-			require.Equal(t, expected, Top10(text))
+			require.Equal(t, expected, cmd.Top10(text))
 		} else {
 			expected := []string{
 				"он",        // 8
@@ -76,7 +77,24 @@ func TestTop10(t *testing.T) {
 				"не",        // 4
 				"то",        // 4
 			}
-			require.Equal(t, expected, Top10(text))
+			require.Equal(t, expected, cmd.Top10(text))
 		}
 	})
+}
+
+func TestSimple(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{
+			input:    `cat and dog, one dog,two cats and one man`,
+			expected: []string{`and`, `one`, `cat`, `cats`, `dog,`, `dog,two`, `man`},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			require.Equal(t, test.expected, cmd.Top10(test.input))
+		})
+	}
 }
