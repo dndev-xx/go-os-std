@@ -1,8 +1,14 @@
 package cmd
 
-import "errors"
+import (
+	"errors"
+	"regexp"
+)
 
-var ErrorEmpty = errors.New("slice is empty")
+var (
+	ErrorEmpty = errors.New("slice is empty")
+	regex      = regexp.MustCompile(REGEX)
+)
 
 const (
 	NEGATIVE = -1

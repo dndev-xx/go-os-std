@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"regexp"
 	"sort"
 	"unicode/utf8"
 )
@@ -11,7 +10,7 @@ func Top10(text string) []string {
 	if utf8.RuneCountInString(text) == ZERO {
 		return nil
 	}
-	spl := regexp.MustCompile(REGEX).FindAllString(text, NEGATIVE)
+	spl := regex.FindAllString(text, NEGATIVE)
 	size := len(spl)
 	tempoCalc := make(map[string]int32, size>>DIV)
 	for i := ZERO; i < size; i++ {
