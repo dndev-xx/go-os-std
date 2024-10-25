@@ -29,7 +29,7 @@ type list struct {
 }
 
 func (l *list) MoveToFront(i *ListItem) {
-	if l.isEmpty() || l.Len() == UNIT {
+	if i == nil || l.isEmpty() || l.Len() == UNIT {
 		return
 	}
 	if i.Prev != nil {
@@ -39,16 +39,18 @@ func (l *list) MoveToFront(i *ListItem) {
 		i.Next.Prev = i.Prev
 	}
 	i.Prev = nil
-	i.Next = l.front.Next
-	if l.front.Next != nil {
-		l.front.Next.Prev = i
+	i.Next = l.front
+	if l.front != nil {
+		l.front.Prev = i
 	}
-	l.front.Next = i
 	l.front = i
+	if l.back == nil {
+		l.back = i
+	}
 }
 
 func (l *list) Remove(i *ListItem) {
-	if l.isEmpty() {
+	if i == nil || l.isEmpty() {
 		return
 	}
 	if i.Prev != nil {
