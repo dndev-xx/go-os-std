@@ -1,5 +1,7 @@
 package libs
 
+import "sync"
+
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -12,7 +14,6 @@ type List interface {
 
 const (
 	ZERO = iota
-	UNIT
 )
 
 type ListItem struct {
@@ -26,10 +27,13 @@ type list struct {
 	front *ListItem
 	back  *ListItem
 	size  int
+	mutex sync.Mutex
 }
 
 func (l *list) MoveToFront(i *ListItem) {
-	if i == nil || l.isEmpty() || l.Len() == UNIT {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+	if i == nil || l.isEmpty() || l.front == i {
 		return
 	}
 	if i.Prev != nil {
@@ -37,6 +41,9 @@ func (l *list) MoveToFront(i *ListItem) {
 	}
 	if i.Next != nil {
 		i.Next.Prev = i.Prev
+	}
+	if l.back == i {
+		l.back = i.Prev
 	}
 	i.Prev = nil
 	i.Next = l.front
@@ -50,6 +57,8 @@ func (l *list) MoveToFront(i *ListItem) {
 }
 
 func (l *list) Remove(i *ListItem) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	if i == nil || l.isEmpty() {
 		return
 	}
@@ -69,6 +78,8 @@ func (l *list) Remove(i *ListItem) {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	elem := &ListItem{
 		Value: v,
 	}
@@ -84,6 +95,8 @@ func (l *list) PushFront(v interface{}) *ListItem {
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	elem := &ListItem{
 		Value: v,
 	}
