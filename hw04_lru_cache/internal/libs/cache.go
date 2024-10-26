@@ -27,10 +27,9 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	item := &ListItem{
 		Value: value,
 	}
-	if val, exist := l.items[key]; exist {
+	if _, isExist := l.items[key]; isExist {
 		l.items[key] = item
 		l.queue.MoveToFront(item)
-		val.Value = value
 		return true
 	}
 	l.items[key] = item
@@ -46,7 +45,7 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 func (l *lruCache) Get(key Key) (interface{}, bool) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
-	if val, exist := l.items[key]; exist {
+	if val, isExist := l.items[key]; isExist {
 		l.queue.MoveToFront(val)
 		return val.Value, true
 	}
