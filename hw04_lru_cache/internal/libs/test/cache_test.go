@@ -45,7 +45,7 @@ func TestCache(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 300, val.(*libs.CacheItem).Value)
 
-		val, ok = c.Get("ccc")
+		_, ok = c.Get("ccc")
 		require.False(t, ok)
 	})
 
