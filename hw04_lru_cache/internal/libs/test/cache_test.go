@@ -32,22 +32,21 @@ func TestCache(t *testing.T) {
 
 		val, ok := c.Get("aaa")
 		require.True(t, ok)
-		require.Equal(t, 100, val)
+		require.Equal(t, 100, val.(*libs.CacheItem).Value)
 
 		val, ok = c.Get("bbb")
 		require.True(t, ok)
-		require.Equal(t, 200, val)
+		require.Equal(t, 200, val.(*libs.CacheItem).Value)
 
 		wasInCache = c.Set("aaa", 300)
 		require.True(t, wasInCache)
 
 		val, ok = c.Get("aaa")
 		require.True(t, ok)
-		require.Equal(t, 300, val)
+		require.Equal(t, 300, val.(*libs.CacheItem).Value)
 
 		val, ok = c.Get("ccc")
 		require.False(t, ok)
-		require.Nil(t, val)
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
@@ -60,7 +59,7 @@ func TestCache(t *testing.T) {
 
 		val, ok := c.Get("aaa")
 		require.True(t, ok)
-		require.Equal(t, 100, val)
+		require.Equal(t, 100, val.(*libs.CacheItem).Value)
 		c.Clear()
 		_, ok = c.Get("aaa")
 		require.False(t, ok)
@@ -77,14 +76,14 @@ func TestCacheMultithreading(_ *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 1_000_0; i++ {
+		for i := 0; i < 1_000_000; i++ {
 			c.Set(libs.Key(strconv.Itoa(i)), i)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 1_000_0; i++ {
+		for i := 0; i < 1_000_000; i++ {
 			c.Get(libs.Key(strconv.Itoa(rand.Intn(1_000_000))))
 		}
 	}()

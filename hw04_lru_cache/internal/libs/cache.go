@@ -24,20 +24,20 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	if value == nil {
 		return false
 	}
-	item := &ListItem{
-		Value: value,
-	}
-	if _, isExist := l.items[key]; isExist {
-		l.items[key] = item
-		l.queue.MoveToFront(item)
+	item := NewCacheItem(value, key)
+	if cur, isExist := l.items[key]; isExist {
+		cur.Value = item
+		l.queue.MoveToFront(cur)
 		return true
 	}
-	l.items[key] = item
-	l.queue.PushFront(item)
+	saveQueue := l.queue.PushFront(item)
+	l.items[key] = saveQueue
 	if l.queue.Len() == l.capacity {
 		lastRecently := l.queue.Back()
-		l.queue.Remove(lastRecently)
-		l.removeFromItems(lastRecently)
+		if lastRecently != nil {
+			l.queue.Remove(lastRecently)
+			delete(l.items, lastRecently.Value.(*CacheItem).Key)
+		}
 	}
 	return false
 }
@@ -57,15 +57,6 @@ func (l *lruCache) Clear() {
 	defer l.mutex.Unlock()
 	l.items = make(map[Key]*ListItem, l.capacity)
 	l.queue = NewList()
-}
-
-func (l *lruCache) removeFromItems(elem *ListItem) {
-	for k, v := range l.items {
-		if elem == v {
-			delete(l.items, k)
-			break
-		}
-	}
 }
 
 func NewCache(capacity int) Cache {
