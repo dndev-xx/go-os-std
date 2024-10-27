@@ -34,7 +34,7 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	}
 	l.items[key] = item
 	l.queue.PushFront(item)
-	if l.queue.Len() > l.capacity {
+	if l.queue.Len() == l.capacity {
 		lastRecently := l.queue.Back()
 		l.queue.Remove(lastRecently)
 		l.removeFromItems(lastRecently)
@@ -55,8 +55,8 @@ func (l *lruCache) Get(key Key) (interface{}, bool) {
 func (l *lruCache) Clear() {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
-	l.items = make(map[Key]*ListItem)
-	l.queue = new(list)
+	l.items = make(map[Key]*ListItem, l.capacity)
+	l.queue = NewList()
 }
 
 func (l *lruCache) removeFromItems(elem *ListItem) {
