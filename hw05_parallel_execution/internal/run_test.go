@@ -19,8 +19,8 @@ func TestRun(t *testing.T) {
 
 	t.Run("if were errors in first M tasks, than finished not more N+M tasks", func(t *testing.T) {
 		tasksCount := 50
-		runner := NewRunner()
 		tasks := make([]Task, 0, tasksCount)
+
 		var runTasksCount int32
 
 		for i := 0; i < tasksCount; i++ {
@@ -34,7 +34,7 @@ func TestRun(t *testing.T) {
 
 		workersCount := 10
 		maxErrorsCount := 23
-		err := runner.Run(tasks, workersCount, maxErrorsCount)
+		err := Run(tasks, workersCount, maxErrorsCount)
 
 		require.Truef(t, errors.Is(err, view.ErrErrorsLimitExceeded), "actual err - %v", err)
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
@@ -43,7 +43,7 @@ func TestRun(t *testing.T) {
 	t.Run("tasks without errors", func(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
-		runner := NewRunner()
+
 		var runTasksCount int32
 		var sumTime time.Duration
 
@@ -62,7 +62,7 @@ func TestRun(t *testing.T) {
 		maxErrorsCount := 1
 
 		start := time.Now()
-		err := runner.Run(tasks, workersCount, maxErrorsCount)
+		err := Run(tasks, workersCount, maxErrorsCount)
 		elapsedTime := time.Since(start)
 		require.NoError(t, err)
 
@@ -70,7 +70,6 @@ func TestRun(t *testing.T) {
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
 	t.Run("without time sleep", func(t *testing.T) {
-		runner := NewRunner()
 		tasks := []Task{
 			func() error { return nil },
 			func() error { return nil },
@@ -81,7 +80,7 @@ func TestRun(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			err := runner.Run(tasks, 4, 2)
+			err := Run(tasks, 4, 2)
 			require.NoError(t, err)
 		}()
 

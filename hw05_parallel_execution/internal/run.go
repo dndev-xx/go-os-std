@@ -9,98 +9,70 @@ import (
 
 type Task func() error
 
-type Runner struct {
-	IRunner
-	wg            sync.WaitGroup
-	taskChan      chan Task
-	executionChan chan error
-	signal        chan struct{}
-	errorCnt      int32
-}
-
-func NewRunner() *Runner {
-	return &Runner{
-		taskChan:      make(chan Task),
-		executionChan: make(chan error),
-		signal:        make(chan struct{}),
-		errorCnt:      view.ZERO,
+func Run(tasks []Task, n, m int) error { //nolint:gocognit
+	if n < view.UNIT {
+		return view.ErrErrorsLessUnitWorker
 	}
-}
-
-func (r *Runner) Run(tasks []Task, n, m int) error {
-	should, err := r.ShouldExecutionTasks(n, m)
-	if err != nil {
-		return err
-	}
-	r.wg.Add(view.UNIT)
+	resolution := m < view.UNIT
+	taskChan := make(chan Task)
+	executionChan := make(chan error)
+	signal := make(chan struct{})
+	var errorCnt int32 = view.ZERO
+	var outerWg sync.WaitGroup
+	outerWg.Add(view.UNIT)
 	go func() {
-		defer r.wg.Done()
-		defer close(r.executionChan)
+		defer outerWg.Done()
+		defer close(executionChan)
 		wg := sync.WaitGroup{}
 		wg.Add(n)
 		for i := view.ZERO; i < n; i++ {
 			go func() {
 				defer wg.Done()
-				r.StartWorkers()
+				for {
+					task, ok := <-taskChan
+					if !ok {
+						return
+					}
+					select {
+					case executionChan <- task():
+					case <-signal:
+						return
+					}
+				}
 			}()
 		}
 		wg.Wait()
 	}()
-	r.wg.Add(view.UNIT)
+	outerWg.Add(view.UNIT)
 	go func() {
-		defer r.wg.Done()
-		defer close(r.taskChan)
-		r.SendTask(tasks)
+		defer outerWg.Done()
+		defer close(taskChan)
+		for _, task := range tasks {
+			select {
+			case taskChan <- task:
+			case <-signal:
+				return
+			}
+		}
 	}()
+	var err error
 	for {
-		rsl, ok := <-r.executionChan
+		rsl, ok := <-executionChan
 		if !ok {
 			break
 		}
-		if *should {
+		if resolution {
 			continue
 		}
 		if rsl != nil {
-			atomic.AddInt32(&r.errorCnt, view.UNIT)
+			atomic.AddInt32(&errorCnt, view.UNIT)
 		}
-		if int(r.errorCnt) >= m {
+		if int(errorCnt) >= m {
 			err = view.ErrErrorsLimitExceeded
-			close(r.signal)
+			close(signal)
 			break
 		}
 	}
-	r.wg.Wait()
+	outerWg.Wait()
 	return err
-}
-
-func (r *Runner) StartWorkers() {
-	for {
-		task, ok := <-r.taskChan
-		if !ok {
-			return
-		}
-		select {
-		case r.executionChan <- task():
-		case <-r.signal:
-			return
-		}
-	}
-}
-
-func (r *Runner) SendTask(tasks []Task) {
-	for _, task := range tasks {
-		select {
-		case r.taskChan <- task:
-		case <-r.signal:
-			return
-		}
-	}
-}
-
-func (r *Runner) ShouldExecutionTasks(n, m int) (*bool, error) {
-	if n < view.UNIT {
-		return nil, view.ErrErrorsLessUnitWorker
-	}
-	resolution := m < view.UNIT
-	return &resolution, nil
 }
