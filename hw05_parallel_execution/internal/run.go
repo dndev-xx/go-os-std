@@ -8,61 +8,43 @@ import (
 
 type Task func() error
 
-func Run(tasks []Task, n, m int) error {
-	if n < view.UNIT {
-		return view.ErrErrorsLessUnitWorker
-	}
-	resolution := m < view.UNIT
-	taskChan := make(chan Task)
-	executionChan := make(chan error)
-	signal := make(chan struct{})
-	var errorCnt int32 = view.ZERO
-	var outerWg sync.WaitGroup
-	outerWg.Add(view.UNIT)
-	go func() {
-		defer outerWg.Done()
-		defer close(executionChan)
-		wg := sync.WaitGroup{}
-		wg.Add(n)
-		for i := view.ZERO; i < n; i++ {
-			go func() {
-				defer wg.Done()
-				for task := range taskChan {
-					select {
-					case executionChan <- task():
-					case <-signal:
+func Run(tasks []Task, n, m int) error { //nolint:gocognitk
+	var errCnt int
+	var flag bool
+	executionChan := make(chan Task, len(tasks))
+	var wg sync.WaitGroup
+	for i := view.ZERO; i < n; i++ {
+		wg.Add(view.UNIT)
+		go func() {
+			defer wg.Done()
+			for task := range executionChan {
+				if flag {
+					return
+				}
+				if err := task(); m > view.ZERO {
+					if err != nil {
+						errCnt++
+						if errCnt >= m {
+							flag = true
+							return
+						}
 					}
 				}
-			}()
-		}
-		wg.Wait()
-	}()
-	outerWg.Add(view.UNIT)
+			}
+		}()
+	}
 	go func() {
-		defer outerWg.Done()
-		defer close(taskChan)
+		defer close(executionChan)
 		for _, task := range tasks {
-			select {
-			case taskChan <- task:
-			case <-signal:
+			if m > 0 && errCnt >= m {
 				return
 			}
+			executionChan <- task
 		}
 	}()
-	var err error
-	for rsl := range executionChan {
-		if resolution {
-			continue
-		}
-		if rsl != nil {
-			errorCnt++
-		}
-		if int(errorCnt) >= m {
-			err = view.ErrErrorsLimitExceeded
-			close(signal)
-			break
-		}
+	wg.Wait()
+	if m > view.ZERO && errCnt >= m {
+		return view.ErrErrorsLimitExceeded
 	}
-	outerWg.Wait()
-	return err
+	return nil
 }
