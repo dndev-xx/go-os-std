@@ -8,7 +8,7 @@ import (
 
 type Task func() error
 
-func Run(tasks []Task, n, m int) error { //nolint:gocognitk
+func Run(tasks []Task, n, m int) error { //nolint:gocognit
 	var errCnt int
 	var flag bool
 	executionChan := make(chan Task, len(tasks))
