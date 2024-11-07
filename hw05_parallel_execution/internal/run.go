@@ -50,11 +50,7 @@ func Run(tasks []Task, n, m int) error {
 		}
 	}()
 	var err error
-	for {
-		rsl, ok := <-executionChan
-		if !ok {
-			break
-		}
+	for rsl := range executionChan {
 		if resolution {
 			continue
 		}
