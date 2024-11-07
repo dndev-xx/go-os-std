@@ -14,6 +14,7 @@ func Run(tasks []Task, n, m int) error { //nolint:gocognit
 	var flag atomic.Bool
 	executionChan := make(chan Task, len(tasks))
 	var wg sync.WaitGroup
+
 	for i := view.ZERO; i < n; i++ {
 		wg.Add(view.UNIT)
 		go func() {
@@ -24,8 +25,7 @@ func Run(tasks []Task, n, m int) error { //nolint:gocognit
 				}
 				if err := task(); m > view.ZERO {
 					if err != nil {
-						atomic.AddInt32(&errCnt, view.UNIT)
-						if int(errCnt) >= m {
+						if atomic.AddInt32(&errCnt, view.UNIT) >= int32(m) {
 							flag.Store(true)
 							return
 						}
@@ -37,14 +37,14 @@ func Run(tasks []Task, n, m int) error { //nolint:gocognit
 	go func() {
 		defer close(executionChan)
 		for _, task := range tasks {
-			if m > 0 && int(errCnt) >= m {
+			if m > 0 && atomic.LoadInt32(&errCnt) >= int32(m) {
 				return
 			}
 			executionChan <- task
 		}
 	}()
 	wg.Wait()
-	if m > view.ZERO && int(errCnt) >= m {
+	if m > view.ZERO && atomic.LoadInt32(&errCnt) >= int32(m) {
 		return view.ErrErrorsLimitExceeded
 	}
 	return nil
