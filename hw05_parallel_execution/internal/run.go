@@ -2,14 +2,13 @@ package internal
 
 import (
 	"sync"
-	"sync/atomic"
 
 	"github.com/dndev-xx/go-os-std/hw05_parallel_execution/internal/view" //nolint:depguard
 )
 
 type Task func() error
 
-func Run(tasks []Task, n, m int) error { //nolint:gocognit
+func Run(tasks []Task, n, m int) error {
 	if n < view.UNIT {
 		return view.ErrErrorsLessUnitWorker
 	}
@@ -28,15 +27,10 @@ func Run(tasks []Task, n, m int) error { //nolint:gocognit
 		for i := view.ZERO; i < n; i++ {
 			go func() {
 				defer wg.Done()
-				for {
-					task, ok := <-taskChan
-					if !ok {
-						return
-					}
+				for task := range taskChan {
 					select {
 					case executionChan <- task():
 					case <-signal:
-						return
 					}
 				}
 			}()
@@ -65,7 +59,7 @@ func Run(tasks []Task, n, m int) error { //nolint:gocognit
 			continue
 		}
 		if rsl != nil {
-			atomic.AddInt32(&errorCnt, view.UNIT)
+			errorCnt++
 		}
 		if int(errorCnt) >= m {
 			err = view.ErrErrorsLimitExceeded
