@@ -9,32 +9,39 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	// Place your code here.
-	rsl := make(Bi)
-	pipe := make(In)
 	if len(stages) == 0 {
-		defer close(rsl)
-		return rsl
+		return in
 	}
-	pipe = stages[0](in)
-	for i := 1; i < len(stages); i++ {
-		pipe = stages[i](pipe)
+	for _, stage := range stages {
+		if stage == nil {
+			continue
+		}
+		data := getData(in, done)
+		in = stage(data)
 	}
+	return in
+}
 
+func getData(in In, done In) Out {
+	out := make(Bi)
 	go func() {
-		defer close(rsl)
+		defer func() {
+			close(out)
+			for range in {
+				continue
+			}
+		}()
 		for {
 			select {
-			case val, ok := <-pipe:
+			case <-done:
+				return
+			case data, ok := <-in:
 				if !ok {
 					return
 				}
-				rsl <- val
-			case <-done:
-				return
+				out <- data
 			}
 		}
 	}()
-
-	return rsl
+	return out
 }
