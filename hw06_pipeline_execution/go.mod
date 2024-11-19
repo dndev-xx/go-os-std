@@ -1,4 +1,4 @@
-module github.com/fixme_my_friend/hw06_pipeline_execution
+module github.com/dndev-xx/go-os-std/hw06_pipeline_execution
 
 go 1.22
 
