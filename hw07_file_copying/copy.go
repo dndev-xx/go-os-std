@@ -13,7 +13,7 @@ var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrInvalidLimit          = errors.New("invalid limit")
-	ErrLessThanZero		     = errors.New("offset is less than zero")
+	ErrLessThanZero          = errors.New("offset is less than zero")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
